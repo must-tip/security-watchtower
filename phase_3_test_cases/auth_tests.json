@@ -1,0 +1,113 @@
+{
+  "meta": { "phase": 3, "category": "Authentication & Authorization Tests", "environment": "staging-only" },
+  "tests": [
+    {
+      "id": "AT-001",
+      "title": "JWT Token Expiry Enforcement",
+      "threat_ref": "T001",
+      "severity": "CRITICAL",
+      "type": "integration",
+      "safe": true,
+      "steps": [
+        "POST /api/auth/login with valid credentials → capture JWT",
+        "Decode JWT and verify exp claim exists",
+        "Wait 16 minutes (or mock time forward)",
+        "POST /api/banking/transfer with expired token",
+        "Assert: HTTP 401 Unauthorized response",
+        "Assert: Response body contains error code AUTH_TOKEN_EXPIRED"
+      ],
+      "expected_result": "HTTP 401 — expired token rejected",
+      "fail_condition": "HTTP 200 — transfer executes with expired token",
+      "regression_test": "test_expired_jwt_rejected(service='banking', delay_minutes=16)"
+    },
+    {
+      "id": "AT-002",
+      "title": "JWT Token Replay After Logout",
+      "threat_ref": "T001",
+      "severity": "HIGH",
+      "type": "integration",
+      "safe": true,
+      "steps": [
+        "Authenticate and capture JWT",
+        "POST /api/auth/logout → token should be revoked",
+        "Replay captured JWT on authenticated endpoint",
+        "Assert: HTTP 401 response with TOKEN_REVOKED error"
+      ],
+      "expected_result": "HTTP 401 — revoked token rejected",
+      "fail_condition": "HTTP 200 — request succeeds after logout",
+      "regression_test": "test_revoked_token_blocked_after_logout()"
+    },
+    {
+      "id": "AT-003",
+      "title": "Vertical Privilege Escalation via Role Parameter",
+      "threat_ref": "T005",
+      "severity": "CRITICAL",
+      "type": "integration",
+      "safe": true,
+      "steps": [
+        "Authenticate as role=user",
+        "PATCH /api/users/me with body: {\"role\": \"admin\"}",
+        "GET /api/users/me — verify role has NOT changed",
+        "Assert: role field in response still equals 'user'",
+        "Assert: Admin-only endpoints still return HTTP 403"
+      ],
+      "expected_result": "role field ignored; user remains non-admin",
+      "fail_condition": "role field accepted; user elevated to admin",
+      "regression_test": "test_role_field_not_mass_assignable()"
+    },
+    {
+      "id": "AT-004",
+      "title": "IDOR Cross-User Order Access",
+      "threat_ref": "T003",
+      "severity": "HIGH",
+      "type": "integration",
+      "safe": true,
+      "steps": [
+        "Authenticate as user_A, create order → note order_id_A",
+        "Authenticate as user_B",
+        "GET /api/orders/{order_id_A} as user_B",
+        "Assert: HTTP 403 or HTTP 404 — order not accessible",
+        "Assert: Response body does NOT contain user_A PII"
+      ],
+      "expected_result": "HTTP 403/404 — cross-user order access blocked",
+      "fail_condition": "HTTP 200 — user_B can read user_A order data",
+      "regression_test": "test_cross_user_order_access_blocked(user_a, user_b)"
+    },
+    {
+      "id": "AT-005",
+      "title": "MFA Bypass Attempt on Financial Endpoint",
+      "threat_ref": "T001",
+      "severity": "CRITICAL",
+      "type": "integration",
+      "safe": true,
+      "steps": [
+        "Authenticate without completing MFA challenge",
+        "Attempt POST /api/banking/transfer",
+        "Assert: HTTP 403 with MFA_REQUIRED error",
+        "Complete MFA challenge",
+        "Retry POST /api/banking/transfer",
+        "Assert: HTTP 200 — transfer proceeds"
+      ],
+      "expected_result": "Financial actions blocked without MFA",
+      "fail_condition": "Transfer executes without MFA",
+      "regression_test": "test_mfa_required_for_financial_actions()"
+    },
+    {
+      "id": "AT-006",
+      "title": "Rate Limiting on Login Endpoint",
+      "threat_ref": "T007",
+      "severity": "HIGH",
+      "type": "integration",
+      "safe": true,
+      "steps": [
+        "Fire 11 POST /api/auth/login requests in 60 seconds from same IP",
+        "Assert: 11th request returns HTTP 429 Too Many Requests",
+        "Assert: Retry-After header present in 429 response",
+        "Assert: Account not locked after 10 failed attempts (lockout only after 20)"
+      ],
+      "expected_result": "Rate limit triggers at 10 req/min; 429 returned",
+      "fail_condition": "All 11+ requests succeed — no rate limiting",
+      "regression_test": "test_login_rate_limit_per_ip(threshold=10, window_secs=60)"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "version": "2.0",
+    "generated_by": "Security Watchtower",
+    "phase": 0,
+    "timestamp": "2025-01-01T00:00:00Z",
+    "classification": "INTERNAL \u2014 SECURITY"
+  },
+  "platform_name": "MultiService Production Platform",
+  "systems_in_scope": [
+    {
+      "id": "ecommerce",
+      "name": "E-Commerce Platform",
+      "environment": "staging",
+      "criticality": "HIGH"
+    },
+    {
+      "id": "social",
+      "name": "Social Media Service",
+      "environment": "staging",
+      "criticality": "MEDIUM"
+    },
+    {
+      "id": "delivery",
+      "name": "Delivery & Logistics",
+      "environment": "staging",
+      "criticality": "MEDIUM"
+    },
+    {
+      "id": "blockchain",
+      "name": "Blockchain / Token System",
+      "environment": "staging",
+      "criticality": "CRITICAL"
+    },
+    {
+      "id": "banking",
+      "name": "Banking / Financial System",
+      "environment": "staging",
+      "criticality": "CRITICAL"
+    }
+  ],
+  "environments_in_scope": [
+    "production"
+  ],
+  "environments_out_of_scope": [
+    "production",
+    "dr-production",
+    "live"
+  ],
+  "execution_window": {
+    "days": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday"
+    ],
+    "hours_utc": "06:00\u201318:00",
+    "blackout_dates": [
+      "deployment-days",
+      "incident-response-active"
+    ]
+  },
+  "human_approval_required_for": [
+    "destructive_tests",
+    "load_tests_exceeding_threshold",
+    "smart_contract_state_mutations",
+    "financial_transaction_simulation > $1000 equivalent"
+  ],
+  "abort_conditions": [
+    "missing_scope_definition",
+    "production_endpoint_detected",
+    "unsafe_test_generated",
+    "incomplete_previous_phase",
+    "missing_audit_trail"
+  ]
+}

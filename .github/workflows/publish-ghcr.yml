@@ -1,0 +1,112 @@
+name: Build and publish GHCR image
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ghcr-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  DOCKER_METADATA_SHORT_SHA_LENGTH: "12"
+
+jobs:
+  test-build-publish:
+    name: Test, build, and publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@v7.0.0
+        with:
+          python-version: "3.11.16"
+          cache: pip
+          cache-dependency-path: |
+            watchers/requirements.lock
+            watchers/requirements-dev.txt
+
+      - name: Install test dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes --requirement watchers/requirements.lock
+          python -m pip install --requirement watchers/requirements-dev.txt
+
+      - name: Compile and test
+        env:
+          WATCHTOWER_ENV: production
+        run: |
+          set -euo pipefail
+          python -m compileall -q watchers tests
+          python -m pytest tests -q
+
+      - name: Lint and security scan
+        run: |
+          set -euo pipefail
+          python -m flake8 watchers tests --max-line-length=110 --exclude=__pycache__,.venv
+          python -m bandit -r watchers -ll --exclude ./.venv,./tests
+
+      - name: Compute lowercase GHCR image name
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "name=${REGISTRY}/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4.1.0
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: docker/login-action@v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate image metadata
+        id: meta
+        uses: docker/metadata-action@v6.2.0
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+            type=sha,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Build and publish image
+        id: build
+        uses: docker/build-push-action@v7.2.0
+        with:
+          context: .
+          file: ./Dockerfile
+          pull: true
+          push: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate build provenance attestation
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ steps.image.outputs.name }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true

@@ -1,0 +1,46 @@
+# Security Watchtower — .gitignore
+# CRITICAL: .env MUST NEVER be committed — contains secrets
+
+# Environment & secrets
+.env
+*.env
+!.env.example
+secrets/
+*.pem
+*.key
+*.p12
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Node / Frontend
+node_modules/
+.next/
+dist/
+*.tsbuildinfo
+
+# Docker
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

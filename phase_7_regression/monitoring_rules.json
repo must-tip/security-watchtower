@@ -1,0 +1,148 @@
+{
+  "meta": { "phase": 7, "total_rules": 20, "systems": "all" },
+  "monitoring_rules": [
+    {
+      "id": "MR-001", "name": "Expired JWT Usage Attempt",
+      "system": "all", "severity": "HIGH",
+      "trigger": "JWT exp claim < now() AND endpoint returns 2xx",
+      "action": "ALERT + REVOKE_SESSION + LOG",
+      "threshold": "1 occurrence",
+      "query": "SELECT * FROM auth_logs WHERE token_exp < CURRENT_TIMESTAMP AND http_status = 200"
+    },
+    {
+      "id": "MR-002", "name": "Login Rate Anomaly — Possible Credential Stuffing",
+      "system": "all", "severity": "HIGH",
+      "trigger": "Failed login attempts > 10 per IP per minute",
+      "action": "RATE_LIMIT_IP + ALERT + CAPTCHA_CHALLENGE",
+      "threshold": "10 req/min per IP",
+      "query": "SELECT ip, COUNT(*) FROM auth_logs WHERE status='failed' AND ts > NOW()-60s GROUP BY ip HAVING COUNT(*) > 10"
+    },
+    {
+      "id": "MR-003", "name": "IDOR Enumeration Pattern",
+      "system": "ecommerce", "severity": "HIGH",
+      "trigger": "User accessing >20 resources with sequential IDs not in their ownership set",
+      "action": "ALERT + TEMP_BLOCK_USER",
+      "threshold": "20 cross-user accesses in 60 seconds"
+    },
+    {
+      "id": "MR-004", "name": "Smart Contract Reentrancy Detection",
+      "system": "blockchain", "severity": "CRITICAL",
+      "trigger": "Recursive call depth > 1 on withdrawal/transfer functions",
+      "action": "HALT_CONTRACT + EMERGENCY_PAUSE + PAGE_ONCALL",
+      "threshold": "1 occurrence",
+      "on_chain_monitor": "event ReentrancyAttempt(address indexed caller, uint256 depth)"
+    },
+    {
+      "id": "MR-005", "name": "Token Supply Anomaly",
+      "system": "blockchain", "severity": "CRITICAL",
+      "trigger": "totalSupply > MAX_SUPPLY OR single-block mint > per_block_cap",
+      "action": "HALT_MINTING + ALERT + PAGE_ONCALL",
+      "threshold": "1 occurrence"
+    },
+    {
+      "id": "MR-006", "name": "Privilege Escalation Attempt",
+      "system": "banking", "severity": "CRITICAL",
+      "trigger": "role field present in PATCH /users/me body",
+      "action": "REJECT_REQUEST + ALERT + LOG_FORENSICS",
+      "threshold": "1 occurrence"
+    },
+    {
+      "id": "MR-007", "name": "SSRF Outbound Request to Private Range",
+      "system": "ecommerce", "severity": "HIGH",
+      "trigger": "Outbound HTTP from app server to RFC1918 (10.x, 172.16.x, 192.168.x) or 169.254.x.x",
+      "action": "BLOCK + ALERT",
+      "threshold": "1 occurrence"
+    },
+    {
+      "id": "MR-008", "name": "Suspicious File Upload Type",
+      "system": "ecommerce", "severity": "CRITICAL",
+      "trigger": "File upload with magic bytes matching executable, script, or archive",
+      "action": "REJECT + ALERT + QUARANTINE",
+      "threshold": "1 occurrence"
+    },
+    {
+      "id": "MR-009", "name": "Large Financial Transaction Anomaly",
+      "system": "banking", "severity": "HIGH",
+      "trigger": "Single transaction > $10,000 OR velocity > $50,000 in 24h for non-verified account",
+      "action": "FLAG_FOR_REVIEW + DELAY_EXECUTION + ALERT",
+      "threshold": "Configurable per account tier"
+    },
+    {
+      "id": "MR-010", "name": "Admin Action Without MFA",
+      "system": "all", "severity": "CRITICAL",
+      "trigger": "Admin-scoped API call with token lacking mfa_verified=true claim",
+      "action": "REJECT + ALERT + FORCE_MFA",
+      "threshold": "1 occurrence"
+    },
+    {
+      "id": "MR-011", "name": "Blockchain Double-Spend Attempt",
+      "system": "blockchain", "severity": "CRITICAL",
+      "trigger": "Two transfers from same account within same block with identical nonce",
+      "action": "REJECT_SECOND + ALERT + FREEZE_ACCOUNT",
+      "threshold": "1 occurrence"
+    },
+    {
+      "id": "MR-012", "name": "Secret Pattern in Application Logs",
+      "system": "all", "severity": "HIGH",
+      "trigger": "Log line matches pattern: (api_key|secret|password|token|private_key)\\s*[=:]\\s*[A-Za-z0-9+/]{20,}",
+      "action": "REDACT_LOG + ALERT + ROTATE_SECRET",
+      "threshold": "1 occurrence"
+    },
+    {
+      "id": "MR-013", "name": "SQL Error in HTTP Response",
+      "system": "all", "severity": "HIGH",
+      "trigger": "HTTP response body contains SQL error message patterns",
+      "action": "ALERT + LOG",
+      "patterns": ["ORA-", "mysql_", "PostgreSQL", "syntax error", "SQLSTATE"]
+    },
+    {
+      "id": "MR-014", "name": "Account Takeover Signal — Geo Anomaly",
+      "system": "banking", "severity": "HIGH",
+      "trigger": "Same account authenticated from 2+ countries within 30 minutes",
+      "action": "CHALLENGE_MFA + ALERT",
+      "threshold": "1 occurrence per account"
+    },
+    {
+      "id": "MR-015", "name": "API Shadow Endpoint Detection",
+      "system": "all", "severity": "MEDIUM",
+      "trigger": "HTTP request to path not in registered API schema returning 200",
+      "action": "ALERT + LOG_PATH",
+      "threshold": "Any undocumented 200 response"
+    },
+    {
+      "id": "MR-016", "name": "Delivery Address Tamper Attempt",
+      "system": "delivery", "severity": "MEDIUM",
+      "trigger": "PATCH /delivery/addresses/{id} where address.user_id != jwt.user_id",
+      "action": "REJECT + LOG",
+      "threshold": "1 occurrence"
+    },
+    {
+      "id": "MR-017", "name": "Mobile APK Integrity Check Failure",
+      "system": "social", "severity": "HIGH",
+      "trigger": "App checksum on API request header does not match known-good signed build hash",
+      "action": "ALERT + LOG + FORCE_UPDATE_PROMPT",
+      "threshold": "1 occurrence"
+    },
+    {
+      "id": "MR-018", "name": "Audit Log Tamper Detection",
+      "system": "all", "severity": "CRITICAL",
+      "trigger": "Audit log hash chain broken — entry hash != SHA256(prev_hash + entry_data)",
+      "action": "HALT_SYSTEM + PAGE_ONCALL + PRESERVE_FORENSICS",
+      "threshold": "1 occurrence"
+    },
+    {
+      "id": "MR-019", "name": "Mass Data Export Anomaly",
+      "system": "all", "severity": "HIGH",
+      "trigger": "Single user downloads >1000 records via API within 10 minutes",
+      "action": "RATE_LIMIT + ALERT",
+      "threshold": "1000 records/10min"
+    },
+    {
+      "id": "MR-020", "name": "CVE in Active Dependency",
+      "system": "all", "severity": "HIGH",
+      "trigger": "Dependency scan identifies package with CVSS >= 7.0 in use",
+      "action": "ALERT + CREATE_TICKET + BLOCK_DEPLOY_IF_CRITICAL",
+      "schedule": "Every CI/CD pipeline run + daily scheduled scan"
+    }
+  ]
+}

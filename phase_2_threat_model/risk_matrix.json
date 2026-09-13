@@ -1,0 +1,52 @@
+{
+  "meta": { "phase": 2, "model": "Likelihood × Impact × System Multiplier" },
+  "composite_risk_scores": [
+    { "system": "blockchain", "score": 81, "level": "CRITICAL", "criticals": 3, "highs": 2, "mediums": 1 },
+    { "system": "ecommerce",  "score": 72, "level": "HIGH",     "criticals": 2, "highs": 3, "mediums": 1 },
+    { "system": "banking",    "score": 65, "level": "HIGH",     "criticals": 2, "highs": 1, "mediums": 1 },
+    { "system": "social",     "score": 45, "level": "MEDIUM",   "criticals": 0, "highs": 2, "mediums": 1 },
+    { "system": "delivery",   "score": 38, "level": "MEDIUM",   "criticals": 0, "highs": 0, "mediums": 2 }
+  ],
+  "priority_attack_paths": [
+    {
+      "rank": 1,
+      "path": "Smart Contract Reentrancy → Token Pool Drain",
+      "systems": ["blockchain"],
+      "potential_impact": "Complete loss of locked token funds",
+      "exploitability": "HIGH",
+      "overall_risk": 9.8
+    },
+    {
+      "rank": 2,
+      "path": "JWT Replay → Unauthorized Banking Transfer",
+      "systems": ["banking"],
+      "potential_impact": "Unauthorized fund transfers, full account takeover",
+      "exploitability": "HIGH",
+      "overall_risk": 9.1
+    },
+    {
+      "rank": 3,
+      "path": "File Upload RCE → Server Compromise → Internal Pivot",
+      "systems": ["ecommerce"],
+      "potential_impact": "Full server compromise, database access, lateral movement",
+      "exploitability": "MEDIUM",
+      "overall_risk": 9.2
+    },
+    {
+      "rank": 4,
+      "path": "Role Bypass → Admin Privilege → Financial Data Access",
+      "systems": ["banking"],
+      "potential_impact": "Full admin access, compliance violation, data exfiltration",
+      "exploitability": "HIGH",
+      "overall_risk": 9.0
+    },
+    {
+      "rank": 5,
+      "path": "Token Mint Race → Supply Inflation → Economic Attack",
+      "systems": ["blockchain"],
+      "potential_impact": "Token devaluation, investor loss, protocol death",
+      "exploitability": "MEDIUM",
+      "overall_risk": 9.6
+    }
+  ]
+}

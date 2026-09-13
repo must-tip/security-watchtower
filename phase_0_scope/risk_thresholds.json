@@ -1,0 +1,28 @@
+{
+  "risk_scoring_model": "CVSS-4.0 + custom financial/blockchain modifiers",
+  "halt_threshold": 85,
+  "alert_thresholds": {
+    "CRITICAL": { "score_range": [75, 100], "action": "HALT_AND_ALERT",   "sla_hours": 4  },
+    "HIGH":     { "score_range": [50, 74],  "action": "ALERT",            "sla_hours": 24 },
+    "MEDIUM":   { "score_range": [25, 49],  "action": "LOG_AND_QUEUE",    "sla_hours": 72 },
+    "LOW":      { "score_range": [0,  24],  "action": "LOG",              "sla_hours": 168 }
+  },
+  "system_multipliers": {
+    "banking":    1.5,
+    "blockchain": 1.5,
+    "ecommerce":  1.2,
+    "social":     1.0,
+    "delivery":   1.0
+  },
+  "financial_exposure_thresholds": {
+    "low":      { "max_usd": 1000,   "approval": "automated"   },
+    "medium":   { "max_usd": 10000,  "approval": "team_lead"   },
+    "high":     { "max_usd": 100000, "approval": "ciso"        },
+    "critical":  { "max_usd": null,   "approval": "board_level" }
+  },
+  "rate_limit_thresholds": {
+    "max_requests_per_minute":  120,
+    "max_requests_per_hour":    2000,
+    "max_concurrent_sessions":  10
+  }
+}

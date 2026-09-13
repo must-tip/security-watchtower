@@ -1,0 +1,59 @@
+{
+  "meta": { "phase": 1, "version": "2.0" },
+  "services": [
+    {
+      "id": "auth-service",         "system": "banking",    "language": "TypeScript", "framework": "NestJS",
+      "port": 8000, "repo": "services/auth",
+      "dependencies": ["postgres", "redis", "email-service"],
+      "exposes": ["/api/auth/login", "/api/auth/logout", "/api/auth/refresh", "/api/auth/mfa"],
+      "auth_mechanism": "JWT + MFA (TOTP)"
+    },
+    {
+      "id": "order-service",         "system": "ecommerce",  "language": "Python",    "framework": "FastAPI",
+      "port": 8001, "repo": "services/orders",
+      "dependencies": ["postgres", "redis", "payment-service", "delivery-service"],
+      "exposes": ["/api/orders", "/api/orders/{id}", "/api/orders/{id}/items"],
+      "auth_mechanism": "JWT bearer"
+    },
+    {
+      "id": "payment-service",       "system": "ecommerce",  "language": "Go",        "framework": "Gin",
+      "port": 8002, "repo": "services/payment",
+      "dependencies": ["postgres", "stripe-api", "banking-service"],
+      "exposes": ["/api/payments", "/api/payments/{id}/capture"],
+      "auth_mechanism": "JWT + HMAC webhook signature"
+    },
+    {
+      "id": "token-service",         "system": "blockchain", "language": "TypeScript", "framework": "Hardhat+Express",
+      "port": 8003, "repo": "services/blockchain",
+      "dependencies": ["ethereum-node", "redis", "banking-service"],
+      "exposes": ["/api/tokens/mint", "/api/tokens/transfer", "/api/tokens/balance"],
+      "auth_mechanism": "JWT + wallet signature"
+    },
+    {
+      "id": "delivery-service",      "system": "delivery",   "language": "Python",    "framework": "Django",
+      "port": 8004, "repo": "services/delivery",
+      "dependencies": ["postgres", "redis", "maps-api"],
+      "exposes": ["/api/delivery/orders", "/api/delivery/addresses/{id}", "/api/delivery/track/{id}"],
+      "auth_mechanism": "JWT bearer"
+    },
+    {
+      "id": "social-service",        "system": "social",     "language": "Node.js",   "framework": "Express",
+      "port": 8005, "repo": "services/social",
+      "dependencies": ["mongodb", "redis", "cdn"],
+      "exposes": ["/api/posts", "/api/users/{id}/follow", "/api/feed"],
+      "auth_mechanism": "JWT bearer"
+    }
+  ],
+  "trust_zones": [
+    { "zone": "public",   "services": ["auth-service", "social-service"],                               "internet_facing": true  },
+    { "zone": "internal", "services": ["order-service", "delivery-service", "token-service"],           "internet_facing": false },
+    { "zone": "critical", "services": ["payment-service"],                                              "internet_facing": false }
+  ],
+  "data_flows": [
+    { "from": "client",           "to": "auth-service",     "data": "credentials",          "transport": "HTTPS/TLS1.3" },
+    { "from": "auth-service",     "to": "order-service",    "data": "JWT",                  "transport": "internal-mTLS" },
+    { "from": "order-service",    "to": "payment-service",  "data": "payment intent",       "transport": "internal-mTLS" },
+    { "from": "payment-service",  "to": "token-service",    "data": "mint request",         "transport": "internal-mTLS" },
+    { "from": "order-service",    "to": "delivery-service", "data": "shipment order",       "transport": "internal-mTLS" }
+  ]
+}

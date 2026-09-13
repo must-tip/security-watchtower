@@ -1,0 +1,56 @@
+services:
+  redis:
+    image: redis:7.2.15-alpine@sha256:05a97a479bc73de66f087dc05b569010772880f778cc8671fa6b8aadee32e5c6
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command:
+      - /bin/sh
+      - -ec
+      - exec redis-server /usr/local/etc/redis/redis.conf --requirepass "$$REDIS_PASSWORD"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - REDISCLI_AUTH="$${REDIS_PASSWORD}" redis-cli --no-auth-warning ping | grep -qx PONG
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+
+  watchers:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      CODE_WATCH_PATHS: /workspace/components
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      REDIS_PORT: "6379"
+    volumes:
+      - ${WATCHTOWER_SOURCE_ROOT:-../..}:/workspace:ro
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    depends_on:
+      redis:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    user: "1001:1001"
+
+volumes:
+  redis_data:

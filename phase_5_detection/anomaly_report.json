@@ -1,0 +1,54 @@
+{
+  "meta": { "phase": 5, "generated": "2025-01-01T00:00:00Z", "window": "last_24h" },
+  "summary": {
+    "total_anomalies": 7,
+    "critical": 2,
+    "high": 3,
+    "medium": 2,
+    "new_since_last_report": 3
+  },
+  "anomalies": [
+    {
+      "id": "AN-001", "severity": "CRITICAL", "system": "banking",
+      "signal": "JWT tokens with past exp timestamps returning HTTP 200 on /api/banking/transfer",
+      "count_last_1h": 4, "first_seen": "2025-01-01T10:12:00Z",
+      "action": "INVESTIGATING", "rule_ref": "MR-001"
+    },
+    {
+      "id": "AN-002", "severity": "CRITICAL", "system": "blockchain",
+      "signal": "totalSupply delta exceeded per-block mint cap by 340% in staging load test",
+      "count_last_1h": 1, "first_seen": "2025-01-01T11:05:00Z",
+      "action": "OPEN", "rule_ref": "MR-005"
+    },
+    {
+      "id": "AN-003", "severity": "HIGH", "system": "ecommerce",
+      "signal": "Sequential order ID enumeration — user_3821 accessed 87 orders in 45 seconds",
+      "count_last_1h": 87, "first_seen": "2025-01-01T09:44:00Z",
+      "action": "BLOCKED", "rule_ref": "MR-003"
+    },
+    {
+      "id": "AN-004", "severity": "HIGH", "system": "ecommerce",
+      "signal": "File upload with PHP magic bytes (Content-Type: image/jpeg) rejected by WAF",
+      "count_last_1h": 2, "first_seen": "2025-01-01T12:33:00Z",
+      "action": "BLOCKED", "rule_ref": "MR-008"
+    },
+    {
+      "id": "AN-005", "severity": "HIGH", "system": "social",
+      "signal": "IP 198.51.100.44 — 847 failed login attempts in 60 seconds (credential stuffing)",
+      "count_last_1h": 847, "first_seen": "2025-01-01T08:01:00Z",
+      "action": "RATE_LIMITED", "rule_ref": "MR-002"
+    },
+    {
+      "id": "AN-006", "severity": "MEDIUM", "system": "banking",
+      "signal": "Geo anomaly: account_id 7291 authenticated from US and RU within 12 minutes",
+      "count_last_1h": 1, "first_seen": "2025-01-01T13:22:00Z",
+      "action": "MFA_CHALLENGED", "rule_ref": "MR-014"
+    },
+    {
+      "id": "AN-007", "severity": "MEDIUM", "system": "all",
+      "signal": "Shadow API endpoint /api/internal/debug returning 200 — not in registered schema",
+      "count_last_1h": 3, "first_seen": "2025-01-01T07:15:00Z",
+      "action": "ALERTING", "rule_ref": "MR-015"
+    }
+  ]
+}

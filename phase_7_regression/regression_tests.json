@@ -1,0 +1,26 @@
+{
+  "meta": { "phase": 7, "total_tests": 15, "framework": "pytest + web3.py + hardhat (blockchain)" },
+  "regression_tests": [
+    { "id":"RT-001", "finding_ref":"F001", "name":"test_reentrancy_guard_blocks_reentry",          "system":"blockchain", "priority":"P0", "command":"pytest tests/blockchain/test_reentrancy.py::test_reentrancy_guard_blocks_reentry -v",   "expected":"PASS — AttackerContract.attack() reverts"           },
+    { "id":"RT-002", "finding_ref":"F002", "name":"test_expired_token_rejected",                   "system":"banking",    "priority":"P0", "command":"pytest tests/banking/test_auth.py::test_expired_token_rejected -v",                     "expected":"PASS — HTTP 401 for token with past exp"            },
+    { "id":"RT-003", "finding_ref":"F002", "name":"test_revoked_token_blocked_after_logout",       "system":"banking",    "priority":"P0", "command":"pytest tests/banking/test_auth.py::test_revoked_token_blocked_after_logout -v",          "expected":"PASS — HTTP 401 after logout"                       },
+    { "id":"RT-004", "finding_ref":"F003", "name":"test_cross_user_order_returns_404",             "system":"ecommerce",  "priority":"P1", "command":"pytest tests/ecommerce/test_orders.py::test_cross_user_order_returns_404 -v",             "expected":"PASS — HTTP 404 for foreign order_id"               },
+    { "id":"RT-005", "finding_ref":"F004", "name":"test_php_upload_rejected",                      "system":"ecommerce",  "priority":"P0", "command":"pytest tests/ecommerce/test_uploads.py::test_php_upload_rejected -v",                     "expected":"PASS — HTTP 400 for .php file"                      },
+    { "id":"RT-006", "finding_ref":"F004", "name":"test_magic_bytes_validated_not_content_type",   "system":"ecommerce",  "priority":"P0", "command":"pytest tests/ecommerce/test_uploads.py::test_magic_bytes_validated_not_content_type -v", "expected":"PASS — PHP with image/jpeg Content-Type rejected"   },
+    { "id":"RT-007", "finding_ref":"F005", "name":"test_concurrent_mint_cannot_exceed_max_supply", "system":"blockchain", "priority":"P0", "command":"npx hardhat test tests/token/test_mint_race.js --network hardhat",                       "expected":"PASS — totalSupply never exceeds MAX_SUPPLY under 50 concurrent mints" },
+    { "id":"RT-008", "finding_ref":"T005", "name":"test_role_field_not_mass_assignable",           "system":"banking",    "priority":"P0", "command":"pytest tests/banking/test_users.py::test_role_field_not_mass_assignable -v",              "expected":"PASS — role unchanged after PATCH with role=admin"  },
+    { "id":"RT-009", "finding_ref":"T004", "name":"test_ssrf_private_range_blocked",               "system":"ecommerce",  "priority":"P1", "command":"pytest tests/ecommerce/test_webhooks.py::test_ssrf_private_range_blocked -v",             "expected":"PASS — 169.254.x.x webhook URL rejected"            },
+    { "id":"RT-010", "finding_ref":"T007", "name":"test_login_rate_limit_per_ip",                  "system":"social",     "priority":"P1", "command":"pytest tests/auth/test_rate_limit.py::test_login_rate_limit_per_ip -v",                   "expected":"PASS — HTTP 429 on 11th request"                    },
+    { "id":"RT-011", "finding_ref":"T002", "name":"test_double_spend_race_condition_blocked",      "system":"blockchain", "priority":"P0", "command":"npx hardhat test tests/token/test_double_spend.js --network hardhat",                     "expected":"PASS — only one of N concurrent transfers succeeds"  },
+    { "id":"RT-012", "finding_ref":"SR12", "name":"test_audit_log_hash_chain_integrity",           "system":"all",        "priority":"P0", "command":"pytest tests/audit/test_log_integrity.py::test_audit_log_hash_chain_integrity -v",        "expected":"PASS — hash chain valid across all log entries"      },
+    { "id":"RT-013", "finding_ref":"SR07", "name":"test_tls_required_all_endpoints",               "system":"all",        "priority":"P1", "command":"pytest tests/security/test_tls.py::test_tls_required_all_endpoints -v",                   "expected":"PASS — HTTP (port 80) redirects to HTTPS"            },
+    { "id":"RT-014", "finding_ref":"SR16", "name":"test_cors_no_wildcard_origin",                  "system":"all",        "priority":"P1", "command":"pytest tests/security/test_cors.py::test_cors_no_wildcard_origin -v",                     "expected":"PASS — Access-Control-Allow-Origin: * absent"        },
+    { "id":"RT-015", "finding_ref":"SR01", "name":"test_mfa_required_for_financial_actions",       "system":"banking",    "priority":"P0", "command":"pytest tests/banking/test_mfa.py::test_mfa_required_for_financial_actions -v",            "expected":"PASS — HTTP 403 on transfer without MFA"             }
+  ],
+  "ci_integration": {
+    "run_on":         ["pull_request", "merge_to_main", "nightly"],
+    "fail_policy":    "Block merge if any P0 test fails",
+    "notify":         ["security-team@company.com", "#security-alerts Slack channel"],
+    "report_format":  "junit-xml + JSON"
+  }
+}

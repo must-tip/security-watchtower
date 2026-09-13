@@ -1,0 +1,17 @@
+{
+  "frameworks": ["PCI-DSS v4.0", "OWASP ASVS 4.0", "SOC 2 Type II", "GDPR", "ISO 27001", "NIST CSF 2.0"],
+  "mandatory_controls": [
+    { "id": "CC-001", "framework": "PCI-DSS",  "control": "Encrypt cardholder data at rest (AES-256)"          },
+    { "id": "CC-002", "framework": "PCI-DSS",  "control": "TLS 1.2+ for all data in transit"                   },
+    { "id": "CC-003", "framework": "PCI-DSS",  "control": "MFA for all administrative access"                  },
+    { "id": "CC-004", "framework": "OWASP",    "control": "Parameterized queries — no dynamic SQL"             },
+    { "id": "CC-005", "framework": "OWASP",    "control": "JWT exp claim enforced < 15 minutes"                },
+    { "id": "CC-006", "framework": "OWASP",    "control": "CORS whitelist — no wildcard origins in production" },
+    { "id": "CC-007", "framework": "SOC2",     "control": "Immutable audit logs with tamper detection"         },
+    { "id": "CC-008", "framework": "SOC2",     "control": "Access reviews quarterly"                           },
+    { "id": "CC-009", "framework": "GDPR",     "control": "Data retention policies enforced programmatically"  },
+    { "id": "CC-010", "framework": "GDPR",     "control": "Right-to-erasure pipeline in place"                 },
+    { "id": "CC-011", "framework": "ISO27001", "control": "Secrets never in source code or logs"               },
+    { "id": "CC-012", "framework": "NIST",     "control": "Vulnerability management — patch CRITICAL within 24h"}
+  ]
+}

@@ -1,0 +1,5 @@
+aiohttp==3.14.3
+redis==6.4.0
+requests==2.34.2
+urllib3==2.7.0
+watchdog==6.0.0
